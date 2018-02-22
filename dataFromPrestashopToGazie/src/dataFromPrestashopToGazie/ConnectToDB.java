@@ -1,42 +1,54 @@
 package dataFromPrestashopToGazie;
 
+import java.io.*;
 import java.sql.*;
+import java.util.*;
 
 public class ConnectToDB {
 	
+	//Query di selezione dei clienti
+	private final String QUERYGETCUSTOMERS = "SELECT * FROM ps_address";
+	
 	//Connessione a Prestashop
-	Connection connPre;
-	Statement stmtPre;
-    ResultSet rsPre;
+	private Connection connPre;
+	private Statement stmtPre;
+	private ResultSet rsPre;
     
     //Connessione a Gazie
-  	Connection connGaz;
-  	Statement stmtGaz;
-    ResultSet rsGaz;
+	private Connection connGaz;
+	private Statement stmtGaz;
+	private ResultSet rsGaz;
+    
+    //Clienti
+	private ArrayList<PrestashopCostumer> costumers = new ArrayList<PrestashopCostumer>();
 	
 	public ConnectToDB() {
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			
-			System.out.println("Connecting to database...");
+			System.out.println("Connecting to databases...");
 			
 			connPre = connectToPrestashop();
 			connGaz = connectToGazie();
 			
 			System.out.println("Connected");
 			
-            System.out.println("Creating statement...");
+            System.out.println("Creating statements...");
             stmtPre = connPre.createStatement();
             stmtGaz = connGaz.createStatement();
-            String sql;
-            sql = "SELECT * FROM ps_address";
-            rsPre = stmtPre.executeQuery(sql);           
             
-            while(rsPre.next()){
-//                int id = rsPre.getInt("id_address");
-
-//                System.out.println("ID: " + id);
-            }
+            //Selezione dei clienti
+            rsPre = stmtPre.executeQuery(QUERYGETCUSTOMERS);   
+            
+            System.out.println("Statements created");
+            
+            //Stringa contenente i dati letti dal DB di Prestashop
+//            String str = "";
+            getCostumersFromPrestashop(rsPre);  
+            
+//            BufferedWriter writer = new BufferedWriter(new FileWriter("temp.csv"));
+//            writer.write(str);
+//            writer.close();
             
             rsPre.close();
             stmtPre.close();
@@ -82,6 +94,32 @@ public class ConnectToDB {
 			return DriverManager.getConnection("jdbc:mysql://localhost/gazie?user=root&password=");
 		} catch (SQLException e) {
 			return null;
+		}
+	}
+	
+	private void getCostumersFromPrestashop(ResultSet rs) {
+		try {
+			while(rs.next()){
+			    getCostumerFromPrestashop(rs);
+			}
+			System.out.println("Num costumers: " + costumers.size());    
+		} catch (SQLException e) {
+			System.out.println("ERRORE getCostumersFromPrestashop: " + e.getMessage());
+		}
+	}
+	
+	private void getCostumerFromPrestashop(ResultSet rs) {
+		PrestashopCostumer pc;
+		try {
+			pc = new PrestashopCostumer(rsPre.getString("firstname"), 
+					rsPre.getString("lastname"), 
+					rsPre.getString("address1"), 
+					rsPre.getString("postcode"), 
+					rsPre.getString("city"), 
+					rsPre.getString("phone"));
+			costumers.add(pc);
+		} catch (SQLException e) {
+			System.out.println("ERRORE getInformationFromPrestashop(): " + e.getMessage());
 		}
 	}
 	
