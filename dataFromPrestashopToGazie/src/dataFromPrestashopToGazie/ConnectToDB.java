@@ -4,37 +4,47 @@ import java.sql.*;
 
 public class ConnectToDB {
 	
-	Connection conn;
-	Statement stmt;
-    PreparedStatement pstmt;
-    ResultSet rs;
+	//Connessione a Prestashop
+	Connection connPre;
+	Statement stmtPre;
+    ResultSet rsPre;
+    
+    //Connessione a Gazie
+  	Connection connGaz;
+  	Statement stmtGaz;
+    ResultSet rsGaz;
 	
-	public ConnectToDB(String percorsoDB, String user, String passwd) {
+	public ConnectToDB() {
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			
 			System.out.println("Connecting to database...");
 			
-			conn = DriverManager.getConnection(
-                "jdbc:mysql://localhost/" + percorsoDB + "?" + "user=" + user + "&password=" + passwd);
+			connPre = connectToPrestashop();
+			connGaz = connectToGazie();
 			
 			System.out.println("Connected");
 			
             System.out.println("Creating statement...");
-            stmt = conn.createStatement();
+            stmtPre = connPre.createStatement();
+            stmtGaz = connGaz.createStatement();
             String sql;
             sql = "SELECT * FROM ps_address";
-            rs = stmt.executeQuery(sql);           
+            rsPre = stmtPre.executeQuery(sql);           
             
-            while(rs.next()){
-                int id  = rs.getInt("id_address");
+            while(rsPre.next()){
+//                int id = rsPre.getInt("id_address");
 
-                System.out.println("ID: " + id);
+//                System.out.println("ID: " + id);
             }
             
-            rs.close();
-            stmt.close();
-            conn.close();
+            rsPre.close();
+            stmtPre.close();
+            connPre.close();
+            
+//            rsGaz.close();
+            stmtGaz.close();
+            connGaz.close();
 
 		} catch (ClassNotFoundException e) {
 			System.out.println("ERRORE class: " + e.getMessage());
@@ -45,13 +55,13 @@ public class ConnectToDB {
 		finally{
 		      //finally block used to close resources
 		      try{
-		         if(stmt!=null)
-		            stmt.close();
+		         if(stmtPre!=null)
+		            stmtPre.close();
 		      }catch(SQLException se2){
 		      }// nothing we can do
 		      try{
-		         if(conn!=null)
-		            conn.close();
+		         if(connPre!=null)
+		            connPre.close();
 		      }catch(SQLException se){
 		         se.printStackTrace();
 		      }//end finally try
@@ -59,7 +69,23 @@ public class ConnectToDB {
 
 	}
 	
+	private Connection connectToPrestashop() {
+		try {
+			return DriverManager.getConnection("jdbc:mysql://localhost/prestashop?user=root&password=");
+		} catch (SQLException e) {
+			return null;
+		}
+	}
+	
+	private Connection connectToGazie() {
+		try {
+			return DriverManager.getConnection("jdbc:mysql://localhost/gazie?user=root&password=");
+		} catch (SQLException e) {
+			return null;
+		}
+	}
+	
 	public static void main(String[] args) {
-		new ConnectToDB("prestashop", "root", "");
+		new ConnectToDB();
 	}
 }
